@@ -13,7 +13,7 @@ Graphe::Graphe(int largeur, int hauteur) {
 	this->hauteur = hauteur;
 
 	for (int i = 0; i < hauteur * largeur; i++) {
-		this->grid.push_back(rand() % 50 + 1);
+		this->grid.push_back(rand() % 50 + 1); //TODO : Choisir entre aléatoire et plat
 	}
 }
 
@@ -32,13 +32,21 @@ Graphe::Graphe(std::string fileName) {
 			this->grid.push_back(std::stoi(altitudeSommet));
 		}
 	}
+	else {
+		throw std::invalid_argument("Fichier introuvable");
+	}
 }
 
 Graphe::~Graphe() {
-	//TODO : delete[] grid;
+	//delete[] &grid; //TODO
 }
 
 Graphe& Graphe::operator = (const Graphe& graphe) {
+	this->largeur = graphe.largeur;
+	this->hauteur = graphe.hauteur;
+	this->grid = graphe.grid;
+	this->gridParcours = graphe.gridParcours;
+
 	return *this;
 }
 
@@ -60,7 +68,7 @@ void Graphe::saveFile(std::string fileName) {
 		grapheFile << this->largeur << " ";
 		grapheFile << this->hauteur << "\n";
 
-		for (int i = 0; i < grid.size() - 1; i++) {
+		for (size_t i = 0; i < grid.size() - 1; i++) {
 			grapheFile << grid[i].getAltitude() << " ";
 		}
 		//Le dernier élément n'aura pas d'espace
@@ -106,14 +114,14 @@ double Graphe::getDistance(GridCoord coord, Direction dir) {
 	int sommetVoisin = -1;
 
 	switch (dir) {
-		case Direction::Nord :
-			sommetVoisin = getNord(coord);
-			break;
 		case Direction::Sud :
 			sommetVoisin = getSud(coord);
 			break;
 		case Direction::Ouest :
 			sommetVoisin = getOuest(coord);
+			break;
+		case Direction::Nord :
+			sommetVoisin = getNord(coord);
 			break;
 		case Direction::Est :
 			sommetVoisin = getEst(coord);
@@ -128,8 +136,8 @@ double Graphe::getDistance(GridCoord coord, Direction dir) {
 std::vector<std::pair<int, Direction>> Graphe::getVoisins(GridCoord coord) {
 	std::vector<std::pair<int, Direction>> voisins;
 	voisins.push_back({ getNord(coord), Direction::Nord });
-	voisins.push_back({ getSud(coord), Direction::Sud });
 	voisins.push_back({ getOuest(coord), Direction::Ouest });
+	voisins.push_back({ getSud(coord), Direction::Sud });
 	voisins.push_back({ getEst(coord), Direction::Est });
 	return voisins;
 }
@@ -141,10 +149,10 @@ void Graphe::afficheAlgo(GridCoord start, GridCoord goal) {
 			int indice = getIndice(curr);
 			std::string toShow = "";
 			if (curr == start) {
-				toShow = "S";
+				toShow = "  S  ";
 			}
 			else if (curr == goal) {
-				toShow = "G";
+				toShow = "  G  ";
 			}
 			else {
 				std::string textNum = std::to_string(gridParcours[indice].longueur);
@@ -174,20 +182,15 @@ void Graphe::afficheAlgo(GridCoord start, GridCoord goal) {
 	}
 }
 
-double Graphe::approximation(GridCoord sommet, GridCoord goal) {
-	return sqrt(pow(sommet.i - goal.i, 2) + pow(sommet.j - goal.j, 2));
-}
-
-void Graphe::parcoursAStar(GridCoord start, GridCoord goal) {
+void Graphe::parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique)(Graphe*, GridCoord, GridCoord)) {
 	if (getIndice(start) == -1 || getIndice(goal) == -1) {
 		throw std::invalid_argument("Le départ ou l'arrivée n'est pas dans le graphe");
 	}
 	for (int i = 0; i < hauteur; i++) {
 		for (int j = 0; j < largeur; j++) {
-			gridParcours.push_back(ContentParcours{ GridCoord{i, j}, GridCoord{-1, -1}, Color::Blanc, 0 });
+			gridParcours.push_back(ContentParcours{ GridCoord{i, j}, GridCoord{-1, -1}, Color::Blanc, 0, 0 });
 		}
 	}
-
 	std::priority_queue<ContentParcours> filePriorite;
 
 	//1er élément
@@ -204,7 +207,7 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal) {
 		if (curr.current == goal) {
 			break;
 		}
-		distParcourue = gridParcours[getIndice(curr.current)].longueur; //Je sais pas si je dois le mettre avant ou après la boucle for
+		distParcourue = gridParcours[getIndice(curr.current)].longueur;
 
 		//Pour chaque voisin, on récupère son indice et l'indication de quel voisin c'est (nord pour le voisin nord)
 		for (std::pair<int, Direction> voisinIndiction : getVoisins(curr.current)) {
@@ -216,7 +219,7 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal) {
 					voisin->color = Color::Gris;
 					voisin->pred = gridParcours[getIndice(curr.current)].current;
 					voisin->longueur = distAvecVoisin;
-					voisin->priorite = distAvecVoisin + approximation(voisin->current, goal);
+					voisin->priorite = distAvecVoisin + fHeuristique(this, voisin->current, goal);
 					filePriorite.emplace(*voisin);
 				}
 			}

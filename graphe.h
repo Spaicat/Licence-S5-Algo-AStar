@@ -24,9 +24,10 @@ struct ContentParcours {
 	double longueur;
 	double priorite;
 
-	//Pour la priority queue : le plus petit doit �tre mis en premier
+	//Pour la priority queue :
+	//Le plus petit doit être mis en premier (et si c'est égale, l'élément ajouté en dernier est prioritaire)
 	bool operator < (const ContentParcours& secondObj) const {
-		return priorite > secondObj.priorite;
+		return priorite >= secondObj.priorite;
 	}
 };
 
@@ -48,9 +49,8 @@ class Graphe {
 		double getDistance(GridCoord coord, Direction dir);
 
 		std::vector<std::pair<int, Direction>> getVoisins(GridCoord coord);
-		void parcoursAStar(GridCoord start, GridCoord goal);
+		void parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique)(Graphe*, GridCoord, GridCoord));
 		void afficheAlgo(GridCoord start, GridCoord goal);
-		double approximation(GridCoord sommet, GridCoord goal); //p-e mettre pointeur fonction
 
 	private :
 		int largeur;
