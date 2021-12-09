@@ -24,15 +24,21 @@ struct ContentParcours {
 	double longueur;
 	double priorite;
 
-	//Pour la priority queue :
-	//Le plus petit doit être mis en premier (et si c'est égale, l'élément ajouté en dernier est prioritaire)
+	//Pour la priority queue
 	bool operator < (const ContentParcours& secondObj) const {
-		return priorite >= secondObj.priorite;
+		//Si les priorités sont égales, l'élément ajouté en dernier est prioritaire
+		// (celui avec la plus grande longueur car ce sont les voisins ceux qui sont ajoutés en dernier)
+		if (priorite == secondObj.priorite)
+			return longueur < secondObj.longueur;
+
+		//Le plus petit doit être mis en premier
+		return priorite > secondObj.priorite;
 	}
 };
 
 class Graphe {
 	public :
+		Graphe();
 		Graphe(int largeur, int hauteur);
 		Graphe(std::string fileName);
 		~Graphe();
@@ -40,6 +46,8 @@ class Graphe {
 		void affiche();
 		void saveFile(std::string fileName);
 
+		int getLargeur();
+		int getHauteur();
 		int getIndice(GridCoord coord);
 		int getAltitude(int indice);
 		int getNord(GridCoord coord);
@@ -49,7 +57,7 @@ class Graphe {
 		double getDistance(GridCoord coord, Direction dir);
 
 		std::vector<std::pair<int, Direction>> getVoisins(GridCoord coord);
-		void parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique)(Graphe*, GridCoord, GridCoord));
+		void parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(&fHeuristique)(Graphe*, GridCoord, GridCoord));
 		void afficheAlgo(GridCoord start, GridCoord goal);
 
 	private :

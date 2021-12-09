@@ -7,6 +7,10 @@
 #include <math.h>
 #include <queue>
 
+Graphe::Graphe() {
+	this->largeur = 0;
+	this->hauteur = 0;
+}
 
 Graphe::Graphe(int largeur, int hauteur) {
 	this->largeur = largeur;
@@ -29,7 +33,12 @@ Graphe::Graphe(std::string fileName) {
 		while (grapheFile.good()) {
 			std::string altitudeSommet;
 			grapheFile >> altitudeSommet;
-			this->grid.push_back(std::stoi(altitudeSommet));
+			if (std::isdigit(altitudeSommet[0])) {
+				this->grid.push_back(std::stoi(altitudeSommet));
+			}
+			else {
+				this->grid.push_back(-1);
+			}
 		}
 	}
 	else {
@@ -55,7 +64,7 @@ void Graphe::affiche() {
 		for (int j = 0; j < largeur; j++) {
 			int alt = this->grid[getIndice(GridCoord{i, j})].getAltitude();
 
-			std::cout << std::setw(5);
+			std::cout << std::setw(4);
 			std::cout << alt << " ";
 		}
 		std::cout << std::endl;
@@ -77,6 +86,13 @@ void Graphe::saveFile(std::string fileName) {
 	std::cout << "Fichier enregistré : \"" << fileName << "\"" << std::endl;
 }
 
+
+int Graphe::getLargeur() {
+	return this->largeur;
+}
+int Graphe::getHauteur() {
+	return this->hauteur;
+}
 
 int Graphe::getIndice(GridCoord coord) {
 	int i = coord.i;
@@ -154,35 +170,41 @@ void Graphe::afficheAlgo(GridCoord start, GridCoord goal) {
 			else if (curr == goal) {
 				toShow = "  G  ";
 			}
+			else if (getAltitude(indice) == -1) {
+				toShow = "  X  ";
+			}
 			else {
 				std::string textNum = std::to_string(gridParcours[indice].longueur);
 				toShow = textNum.substr(0, textNum.find(".") + 2);
+				//toShow = "-"; //TODO
 			}
 
 			std::string strFormated;
 			switch (gridParcours[indice].color) {
 				case Color::Blanc :
-					strFormated = "\033[1m\033[40m\033[37m ";
+					strFormated = "\033[1m\033[40m\033[37m";
 					break;
 				case Color::Gris :
-					strFormated = "\033[1m\033[47m\033[30m ";
+					strFormated = "\033[1m\033[47m\033[30m";
 					break;
 				case Color::Noir:
-					strFormated = "\033[1m\033[41m\033[37m ";
+					strFormated = "\033[1m\033[41m\033[37m";
 					break;
 				case Color::Bleu:
-					strFormated = "\033[1m\033[44m\033[37m ";
+					strFormated = "\033[1m\033[44m\033[37m";
 					break;
 			}
 
-			std::cout << strFormated << std::setw(5);
+			std::cout << strFormated << " " << std::setw(5);
 			std::cout << toShow << " \033[0m\033[0m";
 		}
 		std::cout << std::endl;
 	}
 }
 
-void Graphe::parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique)(Graphe*, GridCoord, GridCoord)) {
+
+
+void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(&fHeuristique)(Graphe*, GridCoord, GridCoord)) {
 	if (getIndice(start) == -1 || getIndice(goal) == -1) {
 		throw std::invalid_argument("Le départ ou l'arrivée n'est pas dans le graphe");
 	}
@@ -196,23 +218,25 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique
 	//1er élément
 	int startIndice = getIndice(start);
 	gridParcours[startIndice].color = Color::Gris;
-	filePriorite.emplace(gridParcours[startIndice]);
+	filePriorite.push(gridParcours[startIndice]);
 
 	double distParcourue = 0;
-
 	while (!filePriorite.empty()) {
 		ContentParcours curr = filePriorite.top();
 		filePriorite.pop();
 
+		//On arrête la boucle quand on est arrivé à la destination
 		if (curr.current == goal) {
 			break;
 		}
+
+		//On retiens la distance parcourue jusqu'ici
 		distParcourue = gridParcours[getIndice(curr.current)].longueur;
 
 		//Pour chaque voisin, on récupère son indice et l'indication de quel voisin c'est (nord pour le voisin nord)
 		for (std::pair<int, Direction> voisinIndiction : getVoisins(curr.current)) {
-			//Si le voisin existe
-			if (voisinIndiction.first > -1) {
+			//Si le voisin existe (cas sur les bords)
+			if (voisinIndiction.first > -1 && getAltitude(voisinIndiction.first) != -1) {
 				double distAvecVoisin = distParcourue + getDistance(curr.current, voisinIndiction.second);
 				ContentParcours* voisin = &(gridParcours[voisinIndiction.first]);
 				if (voisin->color == Color::Blanc || (distAvecVoisin < voisin->longueur && voisin->color != Color::Noir)) {
@@ -220,23 +244,27 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, double(&fHeuristique
 					voisin->pred = gridParcours[getIndice(curr.current)].current;
 					voisin->longueur = distAvecVoisin;
 					voisin->priorite = distAvecVoisin + fHeuristique(this, voisin->current, goal);
-					filePriorite.emplace(*voisin);
+					filePriorite.push(*voisin);
 				}
 			}
 		}
 		gridParcours[getIndice(curr.current)].color = Color::Noir;
 
-		afficheAlgo(start, goal);
-		std::cout << std::endl;
+		if (bavard) {
+			afficheAlgo(start, goal);
+			std::cout << std::endl;
+		}
 	}
+
+	//On marque et affiche le parcours retenu ({ -1, -1 } = chemin non trouvé)
 	GridCoord curr = goal;
-	while (curr != start) {
+	while (curr != start && curr != GridCoord{ -1, -1 }) {
 		gridParcours[getIndice(curr)].color = Color::Bleu;
 		curr = gridParcours[getIndice(curr)].pred;
 	}
-	gridParcours[getIndice(curr)].color = Color::Bleu;
+	if (curr != GridCoord{ -1, -1 })
+		gridParcours[getIndice(curr)].color = Color::Bleu;
 
 	afficheAlgo(start, goal);
-
 	std::cout << std::endl;
 }

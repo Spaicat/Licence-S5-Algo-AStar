@@ -4,8 +4,13 @@
 #include <Windows.h> //Pour windows (utf8) A ENLEVER
 
 
-double approxEuclidienne(Graphe* graph, GridCoord sommet, GridCoord goal) {
+double approxEuclidienne2D(Graphe* graph, GridCoord sommet, GridCoord goal) {
 	return sqrt(pow(sommet.i - goal.i, 2) + pow(sommet.j - goal.j, 2));
+}
+
+double approxEuclidienne3D(Graphe* graph, GridCoord sommet, GridCoord goal) {
+	double distHauteur = pow(graph->getAltitude(graph->getIndice(sommet)) - graph->getAltitude(graph->getIndice(goal)), 2);
+	return sqrt(pow(sommet.i - goal.i, 2) + pow(sommet.j - goal.j, 2) + distHauteur);
 }
 
 double approxManhattan(Graphe* graph, GridCoord sommet, GridCoord goal) {
@@ -14,33 +19,76 @@ double approxManhattan(Graphe* graph, GridCoord sommet, GridCoord goal) {
 	return sqrt(distManhattan + distHauteur);
 }
 
+std::string printQuestionOuiNon(std::string message) {
+	std::string rep;
+	do {
+		std::cout << message;
+		std::cin >> rep;
+	} while (!std::cin.fail() && rep != "o" && rep != "O" && rep != "n" && rep != "N");
+	return rep;
+}
+
 int main() {
 	SetConsoleOutputCP(CP_UTF8); //Pour windows (utf8) A ENLEVER
-
-	//TODO : Faire tous les choix dans la console
-	// Ecriture du chemin du fichier (si oui)
-	// Start et Goal
-	// ...
 
 	std::printf("░░░░▒▒▒▒▓▓▓▓ Graphes ▓▓▓▓▒▒▒▒░░░░\n");
 
 	try {
-		//Graphe gr1 = Graphe("exemple1.txt");
-		Graphe gr1 = Graphe(8, 8);
-		gr1.affiche();
+		std::string rep;
+
+		Graphe gr1;
+		rep = printQuestionOuiNon("Graphe généré à partir d'un fichier (sinon aléatoire) ? (o/n) ");
+		if (rep == "o" || rep == "O") {
+			std::cout << "Nom de votre fichier : ";
+			std::cin >> rep;
+
+			gr1 = Graphe(rep);
+		}
+		else {
+			int hauteur;
+			int largeur;
+			std::cout << "Hauteur du graphe : ";
+			std::cin >> hauteur;
+			std::cout << "Largeur du graphe : ";
+			std::cin >> largeur;
+
+
+			gr1 = Graphe(largeur, hauteur);
+		}
+
+		bool bavard = false;
+		rep = printQuestionOuiNon("Algorithme bavard ? (o/n) ");
+		if (rep == "o" || rep == "O") {
+			bavard = true;
+		}
 
 		GridCoord start = { 0, 0 };
-		GridCoord goal = { 7, 7 };
+		GridCoord goal = { 0, 0 };
+		rep = printQuestionOuiNon("Saisir départ et arrivée (sinon aléatoire) ? (o/n) ");
+		if (rep == "o" || rep == "O") {
+			std::cout << "Départ i (hauteur) : ";
+			std::cin >> start.i;
+			std::cout << "Départ j (largeur) : ";
+			std::cin >> start.j;
 
-		//GridCoord start = { 4, 1 };
-		//GridCoord goal = { 3, 6 };
+			std::cout << "Arrivée i (hauteur) : ";
+			std::cin >> goal.i;
+			std::cout << "Arrivée j (largeur) : ";
+			std::cin >> goal.j;
+		}
+		else {
+			start = { rand() % gr1.getHauteur(), rand() % gr1.getLargeur() };
+			goal = { rand() % gr1.getHauteur(), rand() % gr1.getLargeur() };
+		}
 
-		std::cout << "Distance à l'Est de (" << start.i << ", " << start.j << ") : "
-			<< gr1.getDistance(start, Direction::Est) << std::endl;
+		gr1.parcoursAStar(start, goal, bavard, approxManhattan);
 
-		gr1.parcoursAStar(start, goal, approxManhattan);
+		/*Graphe gr1 = Graphe("france.txt");
 
-		gr1.saveFile("resultat.txt");
+		GridCoord start = { 13, 69 };
+		GridCoord goal = { 30, 96 };
+
+		gr1.parcoursAStar(start, goal, false, approxManhattan);*/
 	}
 	catch (const std::invalid_argument& e) {
 		std::cerr << "\033[1m\033[41m\033[37m" << "Argument invalide : " << e.what() << "\033[0m" << std::endl;
