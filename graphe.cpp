@@ -71,21 +71,6 @@ void Graphe::affiche() {
 	}
 }
 
-void Graphe::saveFile(std::string fileName) {
-	std::ofstream grapheFile(fileName);
-	if (grapheFile.is_open()) {
-		grapheFile << this->largeur << " ";
-		grapheFile << this->hauteur << "\n";
-
-		for (size_t i = 0; i < grid.size() - 1; i++) {
-			grapheFile << grid[i].getAltitude() << " ";
-		}
-		//Le dernier élément n'aura pas d'espace
-		if (grid.size() != 0) grapheFile << grid[grid.size()-1].getAltitude();
-	}
-	std::cout << "Fichier enregistré : \"" << fileName << "\"" << std::endl;
-}
-
 
 int Graphe::getLargeur() {
 	return this->largeur;
@@ -234,11 +219,11 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(
 		distParcourue = gridParcours[getIndice(curr.current)].longueur;
 
 		//Pour chaque voisin, on récupère son indice et l'indication de quel voisin c'est (nord pour le voisin nord)
-		for (std::pair<int, Direction> voisinIndiction : getVoisins(curr.current)) {
+		for (std::pair<int, Direction> voisinIndication : getVoisins(curr.current)) {
 			//Si le voisin existe (cas sur les bords)
-			if (voisinIndiction.first > -1 && getAltitude(voisinIndiction.first) != -1) {
-				double distAvecVoisin = distParcourue + getDistance(curr.current, voisinIndiction.second);
-				ContentParcours* voisin = &(gridParcours[voisinIndiction.first]);
+			if (voisinIndication.first > -1 && getAltitude(voisinIndication.first) != -1) {
+				double distAvecVoisin = distParcourue + getDistance(curr.current, voisinIndication.second);
+				ContentParcours* voisin = &(gridParcours[voisinIndication.first]);
 				if (voisin->color == Color::Blanc || (distAvecVoisin < voisin->longueur && voisin->color != Color::Noir)) {
 					voisin->color = Color::Gris;
 					voisin->pred = gridParcours[getIndice(curr.current)].current;

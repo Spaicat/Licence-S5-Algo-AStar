@@ -13,7 +13,14 @@ double approxEuclidienne3D(Graphe* graph, GridCoord sommet, GridCoord goal) {
 	return sqrt(pow(sommet.i - goal.i, 2) + pow(sommet.j - goal.j, 2) + distHauteur);
 }
 
-double approxManhattan(Graphe* graph, GridCoord sommet, GridCoord goal) {
+double approxManhattan2D(Graphe* graph, GridCoord sommet, GridCoord goal) {
+	//Deux variables séparé pour eviter le warning
+	double first = abs(sommet.i - goal.i);
+	double second = abs(sommet.j - goal.j);
+	return first + second;
+}
+
+double approxManhattan3D(Graphe* graph, GridCoord sommet, GridCoord goal) {
 	double distManhattan = pow(abs(sommet.i - goal.i) + abs(sommet.j - goal.j), 2);
 	double distHauteur = pow(graph->getAltitude(graph->getIndice(sommet)) - graph->getAltitude(graph->getIndice(goal)), 2);
 	return sqrt(distManhattan + distHauteur);
@@ -81,7 +88,7 @@ int main() {
 			goal = { rand() % gr1.getHauteur(), rand() % gr1.getLargeur() };
 		}
 
-		gr1.parcoursAStar(start, goal, bavard, approxManhattan);
+		gr1.parcoursAStar(start, goal, bavard, approxManhattan3D);
 
 		/*Graphe gr1 = Graphe("france.txt");
 

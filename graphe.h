@@ -44,7 +44,6 @@ class Graphe {
 		~Graphe();
 		Graphe& operator = (const Graphe& graphe);
 		void affiche();
-		void saveFile(std::string fileName);
 
 		int getLargeur();
 		int getHauteur();
