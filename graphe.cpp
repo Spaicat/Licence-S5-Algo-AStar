@@ -17,7 +17,7 @@ Graphe::Graphe(int largeur, int hauteur) {
 	this->hauteur = hauteur;
 
 	for (int i = 0; i < hauteur * largeur; i++) {
-		this->grid.push_back(rand() % 50 + 1); //TODO : Choisir entre aléatoire et plat
+		this->grid.push_back(rand() % 50 + 1); //Altitude aléatoire entre 1 et 50
 	}
 }
 
@@ -47,7 +47,8 @@ Graphe::Graphe(std::string fileName) {
 }
 
 Graphe::~Graphe() {
-	//delete[] &grid; //TODO
+	//Vector à son propre destructeur donc il n'y a pas besoin d'en mettre
+	//delete[] &grid; //Pour les tableaux
 }
 
 Graphe& Graphe::operator = (const Graphe& graphe) {
@@ -143,53 +144,64 @@ std::vector<std::pair<int, Direction>> Graphe::getVoisins(GridCoord coord) {
 	return voisins;
 }
 
-void Graphe::afficheAlgo(GridCoord start, GridCoord goal) {
+void Graphe::afficheAlgo(GridCoord start, GridCoord goal, bool showLongueur) {
 	for (int i = 0; i < hauteur; i++) {
 		for (int j = 0; j < largeur; j++) {
 			GridCoord curr = GridCoord{ i, j };
 			int indice = getIndice(curr);
+
+			//Renvoie un espace avant et après chaque chose à afficher dans le cas où on affiche l'altitude
+			std::string space = (showLongueur) ? "  " : "";
+
+			//Détermine la chaine de caractères à afficher
 			std::string toShow = "";
 			if (curr == start) {
-				toShow = "  S  ";
+				toShow = "S";
 			}
 			else if (curr == goal) {
-				toShow = "  G  ";
+				toShow = "G";
 			}
 			else if (getAltitude(indice) == -1) {
-				toShow = "  X  ";
+				toShow = "X";
 			}
 			else {
-				std::string textNum = std::to_string(gridParcours[indice].longueur);
-				toShow = textNum.substr(0, textNum.find(".") + 2);
-				//toShow = "-"; //TODO
+				//Montre l'altitude sous la forme "18.0" sinon montre "-" à la place
+				if (showLongueur) {
+					std::string textNum = std::to_string(gridParcours[indice].longueur);
+					toShow = textNum.substr(0, textNum.find(".") + 2);
+				}
+				else {
+					toShow = "-";
+				}
 			}
 
-			std::string strFormated;
+			std::string strColor;
 			switch (gridParcours[indice].color) {
 				case Color::Blanc :
-					strFormated = "\033[1m\033[40m\033[37m";
+					strColor = "\033[1m\033[40m\033[37m";
 					break;
 				case Color::Gris :
-					strFormated = "\033[1m\033[47m\033[30m";
+					strColor = "\033[1m\033[47m\033[30m";
 					break;
 				case Color::Noir:
-					strFormated = "\033[1m\033[41m\033[37m";
+					strColor = "\033[1m\033[41m\033[37m";
 					break;
 				case Color::Bleu:
-					strFormated = "\033[1m\033[44m\033[37m";
+					strColor = "\033[1m\033[44m\033[37m";
 					break;
 			}
 
-			std::cout << strFormated << " " << std::setw(5);
-			std::cout << toShow << " \033[0m\033[0m";
+			if (showLongueur)
+				std::cout << strColor << " " << std::setw(5) << toShow << " \033[0m\033[0m";
+			else
+				std::cout << strColor << toShow << "\033[0m\033[0m";
 		}
 		std::cout << std::endl;
 	}
 }
 
 
-
-void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(&fHeuristique)(Graphe*, GridCoord, GridCoord)) {
+void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, bool showLongueur, double(&fHeuristique)(Graphe*, GridCoord, GridCoord)) {
 	if (getIndice(start) == -1 || getIndice(goal) == -1) {
 		throw std::invalid_argument("Le départ ou l'arrivée n'est pas dans le graphe");
 	}
@@ -218,7 +230,7 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(
 		//On retiens la distance parcourue jusqu'ici
 		distParcourue = gridParcours[getIndice(curr.current)].longueur;
 
-		//Pour chaque voisin, on récupère son indice et l'indication de quel voisin c'est (nord pour le voisin nord)
+		//Pour chaque voisin, on récupère son indice et l'indication de quel voisin c'est (Nord pour le voisin nord)
 		for (std::pair<int, Direction> voisinIndication : getVoisins(curr.current)) {
 			//Si le voisin existe (cas sur les bords)
 			if (voisinIndication.first > -1 && getAltitude(voisinIndication.first) != -1) {
@@ -236,7 +248,7 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(
 		gridParcours[getIndice(curr.current)].color = Color::Noir;
 
 		if (bavard) {
-			afficheAlgo(start, goal);
+			afficheAlgo(start, goal, showLongueur);
 			std::cout << std::endl;
 		}
 	}
@@ -250,6 +262,6 @@ void Graphe::parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(
 	if (curr != GridCoord{ -1, -1 })
 		gridParcours[getIndice(curr)].color = Color::Bleu;
 
-	afficheAlgo(start, goal);
+	afficheAlgo(start, goal, showLongueur);
 	std::cout << std::endl;
 }

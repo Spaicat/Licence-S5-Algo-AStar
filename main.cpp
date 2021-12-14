@@ -69,6 +69,12 @@ int main() {
 			bavard = true;
 		}
 
+		bool afficheLongueur = false;
+		rep = printQuestionOuiNon("Afficher l'altitude (Sinon prends moins de place) ? (o/n) ");
+		if (rep == "o" || rep == "O") {
+			afficheLongueur = true;
+		}
+
 		GridCoord start = { 0, 0 };
 		GridCoord goal = { 0, 0 };
 		rep = printQuestionOuiNon("Saisir départ et arrivée (sinon aléatoire) ? (o/n) ");
@@ -88,14 +94,7 @@ int main() {
 			goal = { rand() % gr1.getHauteur(), rand() % gr1.getLargeur() };
 		}
 
-		gr1.parcoursAStar(start, goal, bavard, approxManhattan3D);
-
-		/*Graphe gr1 = Graphe("france.txt");
-
-		GridCoord start = { 13, 69 };
-		GridCoord goal = { 30, 96 };
-
-		gr1.parcoursAStar(start, goal, false, approxManhattan);*/
+		gr1.parcoursAStar(start, goal, bavard, afficheLongueur, approxManhattan3D);
 	}
 	catch (const std::invalid_argument& e) {
 		std::cerr << "\033[1m\033[41m\033[37m" << "Argument invalide : " << e.what() << "\033[0m" << std::endl;

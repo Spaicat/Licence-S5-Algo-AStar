@@ -56,8 +56,8 @@ class Graphe {
 		double getDistance(GridCoord coord, Direction dir);
 
 		std::vector<std::pair<int, Direction>> getVoisins(GridCoord coord);
-		void parcoursAStar(GridCoord start, GridCoord goal, bool bavard, double(&fHeuristique)(Graphe*, GridCoord, GridCoord));
-		void afficheAlgo(GridCoord start, GridCoord goal);
+		void parcoursAStar(GridCoord start, GridCoord goal, bool bavard, bool showLongueur, double(&fHeuristique)(Graphe*, GridCoord, GridCoord));
+		void afficheAlgo(GridCoord start, GridCoord goal, bool showLongueur);
 
 	private :
 		int largeur;
